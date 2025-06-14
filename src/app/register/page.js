@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import axios from "@/utils/axios"; 
+
 export default function RegisterPage() {
     const router = useRouter();
     const [name, setName] = useState("");
@@ -20,15 +22,14 @@ export default function RegisterPage() {
         const token = localStorage.getItem("token");
         if (token) {
             // Optionally, validate token with backend
-            fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/validate-token`, {
-                method: "POST",
+            axios.post(`/api/auth/validate-token`, {}, {
                 headers: {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${token}`,
                 },
             })
-                .then((res) => res.json())
-                .then((data) => {
+                .then((res) => {
+                    const data = res.data;
                     if (data.valid) {
                         // Token is valid, redirect to login or dashboard
                         router.push("/login");
@@ -49,45 +50,36 @@ export default function RegisterPage() {
         setError("");
         setSuccess("");
         try {
-            if (!process.env.NEXT_PUBLIC_BACKEND_URL) {
-                setError("Backend URL is not configured. Please set NEXT_PUBLIC_BACKEND_URL in your environment.");
-                setLoading(false);
-                return;
-            }
-            const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/register`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name, username, email, password, role }),
+            const res = await axios.post(`/api/auth/register`, {
+                name,
+                username,
+                email,
+                password,
+                role,
             });
-            let data = {};
-            try {
-                data = await res.json();
-            } catch (jsonErr) {
-                setError("Invalid server response.");
-                setLoading(false);
-                return;
-            }
-            if (!res.ok) {
-                setError(data.message || "Registration failed");
+
+            if (res.status !== 200) {
+            setError(res.data.message || "Registration failed");
             } else {
-                setSuccess("Registration successful! Redirecting...");
-                setName("");
-                setUsername("");
-                setEmail("");
-                setPassword("");
-                // Redirect based on role
-                if (role === "doctor") {
-                    router.push("/dashboard/doctor");
-                } else if (role === "student") {
-                    router.push("/dashboard/student");
-                } else {
-                    router.push("/dashboard/user");
-                }
+            setSuccess("Registration successful! Redirecting...");
+            setName("");
+            setUsername("");
+            setEmail("");
+            setPassword("");
+            // Redirect based on role
+            if (role === "doctor") {
+                router.push("/dashboard/doctor");
+            } else if (role === "student") {
+                router.push("/dashboard/student");
+            } else {
+                router.push("/dashboard/user");
             }
-        } catch (err) {
-            setError("Network error");
+            }
+        } catch (error) {
+            setError(error.response?.data?.message || "Network error");
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
     };
 
     return (
@@ -163,6 +155,12 @@ export default function RegisterPage() {
                 >
                     {loading ? "Registering..." : "Register"}
                 </button>
+                <p className="text-sm text-gray-600 text-center">
+                    Already have an account?{" "}
+                    <a href="/login" className="text-blue-600 hover:underline">
+                        Login
+                    </a>
+                </p>
             </form>
         </div>
     );

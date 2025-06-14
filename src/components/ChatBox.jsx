@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import socket from '@/lib/socket';
-import axios from 'axios';
+import axios from '@/utils/axios';
 
 export default function ChatBox({ roomId, userId }) {
   const [messages, setMessages] = useState([]);
@@ -12,7 +12,7 @@ export default function ChatBox({ roomId, userId }) {
 
     socket.emit('joinRoom', roomId);
 
-    axios.get(`http://localhost:5050/api/chats/messages/${roomId}`)
+    axios.get(`/api/chats/room/${roomId}`)
       .then(res => setMessages(res.data.messages));
 
     socket.on('receiveMessage', (msg) => {
@@ -33,7 +33,7 @@ export default function ChatBox({ roomId, userId }) {
     socket.emit('sendMessage', { roomId, content: text, sender });
 
     // Also save message via REST API
-    await fetch('http://localhost:5050/api/chats/send', {
+    await fetch('/api/chats/send', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ roomId, content: text, sender }),
@@ -52,11 +52,21 @@ export default function ChatBox({ roomId, userId }) {
   return (
     <div className="p-4 border rounded w-full max-w-xl mx-auto">
       <div className="mb-4 h-[300px] overflow-y-auto border p-2">
-        {messages.map((msg, i) => (
-          <div key={i}>
-            <strong>{msg.sender && msg.sender.username ? msg.sender.username : msg.sender}</strong>: {msg.content}
-          </div>
-        ))}
+        {messages.map((msg, i) => {
+          // If sender is an object with username, use it
+          // If sender is just an ID, show "You" if it's the current user, else "Unknown"
+          let senderName = "Unknown";
+          if (msg.sender && typeof msg.sender === "object" && msg.sender.username) {
+            senderName = msg.sender.username;
+          } else if (msg.sender === userId) {
+            senderName = "You";
+          }
+          return (
+            <div key={i}>
+              <strong>{senderName}</strong>: {msg.content}
+            </div>
+          );
+        })}
       </div>
       <div className="flex gap-2">
         <input

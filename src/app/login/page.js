@@ -2,7 +2,7 @@
 
 
 import React, { useState } from "react";
-import axios from "axios";
+import axios from "@/utils/axios"; // Adjust the import path as necessary
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -15,7 +15,7 @@ const Login = () => {
     setError("");
     try {
       const res = await axios.post(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/login`,
+        `/api/auth/login`,
         { email, password }
       );
       const data = res.data;
@@ -75,6 +75,9 @@ const Login = () => {
       >
         Login
       </button>
+      <p className="text-sm text-gray-600 mt-4">
+        Don't have an account? <a href="/register" className="text-blue-600 hover:underline">Register</a>
+      </p>
     </form>
   );
 };
