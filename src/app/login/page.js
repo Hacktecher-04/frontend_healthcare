@@ -48,7 +48,7 @@ const Login = () => {
   }
 
   const handleGoogleLogin = () => {
-    window.location.href = `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/google`;
+    window.location.href = `${process.env.NEXT_PUBLIC_BACKEND_URL}auth/google`;
   };
 
   const handleSubmit = async (e) => {
