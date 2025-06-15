@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import React from "react";
+
 import axios from "@/utils/axios"; 
 
 export default function RegisterPage() {
@@ -17,32 +19,39 @@ export default function RegisterPage() {
     const [success, setSuccess] = useState("");
 
     // Check token in localStorage and redirect if valid
+    React.useEffect(() => {
+      const token = localStorage.getItem('token');
+      const dashboardRoute = localStorage.getItem('dashboardRoute');
 
-    useEffect(() => {
-        const token = localStorage.getItem("token");
-        if (token) {
-            // Optionally, validate token with backend
-            axios.post(`/api/auth/validate-token`, {}, {
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
-            })
-                .then((res) => {
-                    const data = res.data;
-                    if (data.valid) {
-                        // Token is valid, redirect to login or dashboard
-                        router.push("/login");
-                    } else {
-                        // Token invalid, remove it
-                        localStorage.removeItem("token");
-                    }
-                })
-                .catch(() => {
-                    localStorage.removeItem("token");
-                });
-        }
-    }, [router]);
+      if (token && dashboardRoute) {
+        const verifyToken = async () => {
+          try {
+            await axios.get('/api/auth/validate-token', {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            });
+            window.location.href = dashboardRoute;
+          } catch (error) {
+            localStorage.clear();
+            setError("Session expired. Please login again.");
+            setLoading(false);
+          }
+        };
+
+        verifyToken();
+      } else {
+        setLoading(false);
+      }
+    }, []);
+
+    if (loading) {
+      return (
+        <div className="fixed top-0 left-0 w-full h-full flex justify-center items-center bg-white bg-opacity-75 z-50">
+          <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-black"></div>
+        </div>
+      );
+    }
 
     const handleSubmit = async (e) => {
         e.preventDefault();

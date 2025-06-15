@@ -10,6 +10,43 @@ const Login = () => {
   const [dashboard, setDashboard] = useState("user"); // default
   const [error, setError] = useState("");
 
+
+    const [loading, setLoading] = useState(true);
+
+    React.useEffect(() => {
+      const token = localStorage.getItem('token');
+      const dashboardRoute = localStorage.getItem('dashboardRoute');
+
+      if (token && dashboardRoute) {
+        const verifyToken = async () => {
+          try {
+            await axios.get('/api/auth/validate-token', {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            });
+            window.location.href = dashboardRoute;
+          } catch (error) {
+            localStorage.clear();
+            setError("Session expired. Please login again.");
+            setLoading(false);
+          }
+        };
+
+        verifyToken();
+      } else {
+        setLoading(false);
+      }
+    }, []);
+
+    if (loading) {
+      return (
+        <div className="fixed top-0 left-0 w-full h-full flex justify-center items-center bg-white bg-opacity-75 z-50">
+          <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-black"></div>
+        </div>
+      );
+    }
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -32,6 +69,7 @@ const Login = () => {
       setError(err.response?.data?.message || "Login failed");
     }
   };
+
 
   return (
     <form
@@ -76,7 +114,7 @@ const Login = () => {
         Login
       </button>
       <p className="text-sm text-gray-600 mt-4">
-        Don't have an account? <a href="/register" className="text-blue-600 hover:underline">Register</a>
+        Dont have an account? <a href="/register" className="text-blue-600 hover:underline">Register</a>
       </p>
     </form>
   );

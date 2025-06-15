@@ -6,8 +6,10 @@ import axios from '@/utils/axios';
 import { io } from "socket.io-client";
 import ChatNavBar from '@/components/ChatNavBar';
 import Addmem from '@/components/AddMem';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
-const SOCKET_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000"; // Adjust if needed
+const SOCKET_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
 
 const ChatRoom = () => {
     const { roomId } = useParams();
@@ -21,22 +23,17 @@ const ChatRoom = () => {
     const socketRef = useRef(null);
 
     useEffect(() => {
-        // Get current user from localStorage
         const userData = localStorage.getItem("user");
         if (userData) setUser(JSON.parse(userData));
     }, []);
 
-    // Setup socket connection
     useEffect(() => {
         if (!user || !roomId) return;
 
-        // Connect socket
         socketRef.current = io(SOCKET_URL, { transports: ["websocket"] });
 
-        // Join the room
         socketRef.current.emit("joinRoom", { roomId, userId: user._id });
 
-        // Listen for incoming messages
         socketRef.current.on("receiveMessage", (msg) => {
             setMessages((prev) => [...prev, msg]);
         });
@@ -67,6 +64,7 @@ const ChatRoom = () => {
                 }
             } catch (error) {
                 console.error("Error fetching room details:", error);
+                toast.error("Failed to fetch room details.");
             }
         };
 
@@ -85,6 +83,7 @@ const ChatRoom = () => {
                 setVerifyError('');
             } catch (error) {
                 setVerifyError(router.back);
+                toast.error("User verification failed.");
             }
         };
         if (roomId) verifyUser();
@@ -98,6 +97,7 @@ const ChatRoom = () => {
                 setLoading(false);
             } catch (error) {
                 setLoading(false);
+                toast.error("Failed to fetch messages.");
             }
         };
         if (roomId) fetchMessages();
@@ -107,7 +107,7 @@ const ChatRoom = () => {
         if (!newMessage.trim() || !user) return;
         try {
             const token = localStorage.getItem("token");
-            // Send via socket for real-time
+
             socketRef.current.emit("sendMessage", {
                 roomId,
                 content: newMessage,
@@ -123,8 +123,9 @@ const ChatRoom = () => {
             });
 
             setNewMessage('');
+            toast.success("Message sent successfully!");
         } catch (error) {
-            alert('Error sending message');
+            toast.error('Error sending message.');
         }
     };
 
@@ -149,7 +150,7 @@ const ChatRoom = () => {
 
     return (
         <div className="flex flex-col h-screen bg-whatsapp-background">
-            {/* Header */}
+            <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
             <header className="bg-whatsapp-header p-4 text-white flex items-center justify-between">
                 <h1 className="text-xl font-semibold">{roomName || `Chat Room: ${roomId}`}</h1>
                 <div onClick={navibar} className="flex flex-col gap-1 items-center cursor-pointer">
@@ -188,7 +189,6 @@ const ChatRoom = () => {
                 )}
             </div>
 
-            {/* Input Area */}
             <div className="p-4 bg-whatsapp-input">
                 <div className="flex items-center">
                     <input
