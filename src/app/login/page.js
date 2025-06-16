@@ -2,13 +2,36 @@
 
 
 import React, { useState } from "react";
-import axios from "@/utils/axios"; // Adjust the import path as necessary
+import axios from "@/utils/axios"; 
+import { motion } from "framer-motion";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [dashboard, setDashboard] = useState("user"); // default
   const [error, setError] = useState("");
+  const [role, setRole] = useState('student');
+  const [username, setUsername] = useState('');
+
+  const handleGoogleLogin = async () => {
+    if (!username || !password || !role) {
+      setError("All fields are required.");
+      return;
+    }
+
+    try {
+      // Store temporarily in localStorage (for redirect callback)
+      localStorage.setItem('username', username);
+      localStorage.setItem('password', password);
+      localStorage.setItem('role', role);
+
+      // Redirect to Google login with role (token will come in callback)
+      window.location.href = `http://localhost:5050/auth/google`;
+    } catch (err) {
+      console.error("Google login redirect failed:", err);
+      setError("Failed to initiate Google login.");
+    }
+  };
 
 
   const [loading, setLoading] = useState(true);
@@ -46,10 +69,6 @@ const Login = () => {
       </div>
     );
   }
-
-  const handleGoogleLogin = () => {
-    window.location.href = `${process.env.NEXT_PUBLIC_BACKEND_URL}auth/google`;
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -123,13 +142,79 @@ const Login = () => {
         </p>
       </form>
 
-      <button
-        onClick={handleGoogleLogin}
-        className="bg-white text-black px-6 py-3 rounded-lg font-semibold shadow-md hover:bg-black hover:text-white border transition duration-300"
+      <motion.div
+        className=" bg-gradient-to-br from-indigo-100 via-blue-100 to-purple-100 flex justify-center items-center px-4"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 1.0 }}
       >
-        <img src="../images/google.webp"/>
-        Continue with Google
-      </button>
+        <motion.div
+          className="bg-white shadow-2xl rounded-2xl p-10 max-w-md w-full space-y-6"
+          initial={{ y: 100 }}
+          animate={{ y: 0 }}
+          transition={{ type: "spring", stiffness: 60 }}
+        >
+          <h2 className="text-3xl font-bold text-center text-indigo-600">Complete Profile Before Google Login</h2>
+
+          {error && (
+            <motion.p
+              className="text-red-500 text-sm text-center"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+            >
+              {error}
+            </motion.p>
+          )}
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700">Username</label>
+              <input
+                type="text"
+                className="w-full border rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="your_unique_username"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700">Password</label>
+              <input
+                type="password"
+                className="w-full border rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="min 6 characters"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700">Select Role</label>
+              <select
+                id="role-select"
+                className="w-full border rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+              >
+                <option value="student">Student</option>
+                <option value="doctor">Doctor</option>
+                <option value="user">User</option>
+              </select>
+            </div>
+
+            <motion.button
+              onClick={handleGoogleLogin}
+              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-xl shadow-lg transition-all duration-300"
+              whileTap={{ scale: 0.95 }}
+              whileHover={{ scale: 1.02 }}
+            >
+              Continue with Google
+            </motion.button>
+          </div>
+        </motion.div>
+      </motion.div>
+
     </div>
   );
 };
