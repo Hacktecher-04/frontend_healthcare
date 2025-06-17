@@ -28,13 +28,18 @@ const Navbar = () => {
                 <li><Link href="/">Home</Link></li>
                 <li><Link href="/about">About</Link></li>
                 <li><Link href="/contact">Contact</Link></li>
-                <li><Link href="/profile">
+                <li><Link href="/Profile">
                     {profileImage && (
                         <img
                             src={profileImage}
                             alt="Profile"
                             className="rounded-full h-8 w-8"
                         />
+                        <button 
+                            classname="p-[4px] bg-blue-300"
+                            href="/Profile">
+                            Profile
+                        <button/>
                     )}</Link>
                 </li>
             </ul>
