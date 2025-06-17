@@ -35,9 +35,7 @@ const Navbar = () => {
                             alt="Profile"
                             className="rounded-full h-8 w-8"
                         />
-                        <button 
-                            classname="p-[4px] bg-blue-300"
-                            href="/Profile">
+                        <button>
                             Profile
                         <button/>
                     )}</Link>
