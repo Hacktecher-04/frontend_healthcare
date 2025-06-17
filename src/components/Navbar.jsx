@@ -35,10 +35,9 @@ const Navbar = () => {
                             alt="Profile"
                             className="rounded-full h-8 w-8"
                         />
-                        <button>
-                            Profile
-                        <button/>
-                    )}</Link>
+                    )}
+                    Profile
+                </Link>
                 </li>
             </ul>
         </nav>
