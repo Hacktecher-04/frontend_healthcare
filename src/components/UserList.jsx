@@ -1,62 +1,63 @@
+"use client";
+
 import React, { useState, useEffect } from "react";
-import axios from "@/utils/axios"; // Adjust the import path as necessary
+import axios from "@/utils/axios";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import UserCard from "./UserCard";
 
-const UserList = ({ userRole, token }) => {
+const UserList = () => {
   const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [messageStatus, setMessageStatus] = useState("");
+  const [userRole, setUserRole] = useState(null);
+  const [authorized, setAuthorized] = useState(false);
+
   const router = useRouter();
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    const storedToken = localStorage.getItem("token");
+    try {
+      const storedUser = localStorage.getItem("user");
+      const storedToken = localStorage.getItem("token");
 
-    const user = storedUser ? JSON.parse(storedUser) : null;
-    const token = storedToken || null;
+      if (!storedUser || !storedToken) {
+        return;
+      }
 
-    let userRoleFromStorage;
+      const user = JSON.parse(storedUser);
+      const token = storedToken;
 
-    if (user) {
-      userRoleFromStorage = user.role;
-    } else {
-      userRoleFromStorage = "user";
+      setUserRole(user?.role || "user");
+      setAuthorized(true);
+
+      fetchUsers(user?.role, token);
+    } catch {
+      // Silently ignore
     }
-
-    fetchUsers(userRoleFromStorage, token);
   }, []);
 
-  const fetchUsers = async (userRole, token) => {
-    let searchRoles = [];
-
-    if (userRole === "doctor") {
-      searchRoles = ["student", "user"];
-    } else if (userRole === "student") {
-      searchRoles = ["user"];
-    } else {
-      searchRoles = [];
-    }
-
+  const fetchUsers = async (role, token) => {
     try {
       setLoading(true);
-      const response = await axios.post(
-        `/api/users/search`,
-        { roles: searchRoles },
+
+      const rolesToSearch =
+        role === "doctor" ? ["student", "user"] : role === "student" ? ["user"] : [];
+
+      const res = await axios.post(
+        "/api/users/search",
+        { roles: rolesToSearch },
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         }
       );
-      setUsers(response.data);
-      setLoading(false);
-    } catch (err) {
-      console.error("Fetch error:", err);
-      setError("Failed to fetch users.");
+
+      setUsers(res.data || []);
+    } catch {
+      // Silently ignore
+    } finally {
       setLoading(false);
     }
   };
@@ -67,35 +68,25 @@ const UserList = ({ userRole, token }) => {
   };
 
   const handleSendMessage = async () => {
-    const senderData = JSON.parse(localStorage.getItem("user"));
-    const senderId = senderData?._id;
-
-    if (!senderId || !selectedUser?._id) {
-      setMessageStatus("Missing sender or recipient data.");
-      return;
-    }
-
     try {
-      const response = await axios.post(`/api/chats/room`, {
-        name: `${senderData.name} & ${selectedUser.name}`,
+      const sender = JSON.parse(localStorage.getItem("user"));
+      const senderId = sender?._id;
+
+      if (!senderId || !selectedUser?._id) return;
+
+      const res = await axios.post("/api/chats/room", {
+        name: `${sender.name} & ${selectedUser.name}`,
         isGroup: false,
         members: [senderId, selectedUser._id],
       });
-      console.log("Chat room created:", response.data);
-      router.push(`/chat/${response.data.room._id}`);
-    } catch (error) {
-      console.error("Send error:", error);
-      setMessageStatus("Failed to send message.");
+
+      router.push(`/chat/${res.data.room._id}`);
+    } catch {
+      // Silently ignore
     }
   };
 
-  if (loading) {
-    return <p>Loading users...</p>;
-  }
-
-  if (error) {
-    return <p>Error: {error}</p>;
-  }
+  if (!authorized) return null;
 
   return (
     <div>
@@ -113,14 +104,10 @@ const UserList = ({ userRole, token }) => {
       </motion.h1>
 
       {loading && (
-        <p className="text-center text-gray-500 animate-pulse">
-          Loading users...
-        </p>
+        <p className="text-center text-gray-500 animate-pulse">Loading users...</p>
       )}
 
-      {error && <p className="text-center text-red-600">{error}</p>}
-
-      {!loading && !error && (
+      {!loading && users.length > 0 && (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {users.map((user, index) => (
@@ -155,7 +142,7 @@ const UserList = ({ userRole, token }) => {
         </>
       )}
 
-      {!loading && !users.length && !error && (
+      {!loading && users.length === 0 && (
         <p className="text-center mt-10 text-gray-600">
           No users found for your role view.
         </p>
