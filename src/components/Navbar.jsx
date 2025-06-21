@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { Menu, X } from 'lucide-react'; // Add lucide-react for icons
 
 const Navbar = () => {
-  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [profileImage, setProfileImage] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
