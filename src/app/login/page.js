@@ -123,7 +123,7 @@ const Login = () => {
 
       <div className=" flex items-center justify-center bg-gray-100">
       <a
-        href="http://localhost:5050/auth/google"
+        href=`https://backend-halthcare.onrender.com/auth/google`"
         className="px-6 py-3 bg-blue-600 text-white rounded shadow hover:bg-blue-700 transition"
       >
         Login with Google
