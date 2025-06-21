@@ -10,34 +10,13 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [dashboard, setDashboard] = useState("user"); // default
   const [error, setError] = useState("");
-  const [role, setRole] = useState('student');
-  const [username, setUsername] = useState('');
-
-  const handleGoogleLogin = async () => {
-    if (!username || !password || !role) {
-      setError("All fields are required.");
-      return;
-    }
-
-    try {
-      // Store temporarily in localStorage (for redirect callback)
-      localStorage.setItem('username', username);
-      localStorage.setItem('password', password);
-      localStorage.setItem('role', role);
-
-      // Redirect to Google login with role (token will come in callback)
-      window.location.href = `http://localhost:5050/auth/google`;
-    } catch (err) {
-      console.error("Google login redirect failed:", err);
-      setError("Failed to initiate Google login.");
-    }
-  };
-
 
   const [loading, setLoading] = useState(true);
 
   React.useEffect(() => {
     const token = localStorage.getItem('token');
+
+    console.log(token)
     const dashboardRoute = localStorage.getItem('dashboardRoute');
 
     if (token && dashboardRoute) {

@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import axios from 'axios';
 
 export default function Setup() {
   const router = useRouter();
@@ -11,15 +12,19 @@ export default function Setup() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const res = await fetch('http://localhost:5050/auth/setup', {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, role }),
-    });
+    try {
+      const res = await axios.post(
+        'http://localhost:5050/api/setup',
+        { username, role },
+        { withCredentials: true } // includes cookies like session ID
+      );
 
-    if (res.ok) {
-      router.push(`/dashboard/${role.toLowerCase()}`); // ✅ dynamic redirect based on role
+      if (res.status === 200) {
+        router.push(`/dashboard/${role.toLowerCase()}`);
+      }
+    } catch (err) {
+      console.error('Error during setup:', err.response?.data || err.message);
+      alert(err.response?.data?.error || 'Something went wrong');
     }
   };
 

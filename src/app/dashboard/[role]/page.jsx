@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import React, { useEffect, useState } from "react";
 import axios from "@/utils/axios";
@@ -9,7 +9,17 @@ import UserListRoom from "@/components/UserListRoom";
 const UserSearch = () => {
   const [rooms, setRooms] = useState([]);
   const [user, setUser] = useState(null);
+  const [role, setRole] = useState(null);
   const router = useRouter();
+
+  // Extract role from URL query manually
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const params = new URLSearchParams(window.location.search);
+    const roleParam = params.get("role");
+    if (roleParam) setRole(roleParam);
+  }, []);
 
   // Check login status and get user from localStorage
   useEffect(() => {
@@ -28,7 +38,16 @@ const UserSearch = () => {
       console.error("Failed to parse user:", e);
       router.push("/login");
     }
-  }, []);
+  }, [router]);
+
+  // Redirect if user role mismatches role from URL
+  useEffect(() => {
+    if (!user || !role) return;
+
+    if (user.role !== role) {
+      router.replace(`/dashboard/${user.role}`);
+    }
+  }, [user, role, router]);
 
   // Fetch rooms only when user is available
   useEffect(() => {
@@ -50,7 +69,9 @@ const UserSearch = () => {
     fetchRooms();
   }, [user]);
 
-  const [show, setShow] = useState(false);
+  if (!user || !role) {
+    return <p>Loading...</p>;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-100 to-purple-200 p-6 transition-all duration-500 ease-in-out">
@@ -102,6 +123,18 @@ const UserSearch = () => {
         ) : (
           <p className="text-gray-500 animate-pulse">No rooms available.</p>
         )}
+      </div>
+
+      <div style={{ padding: 20 }}>
+        <h1>Dashboard - {role.toUpperCase()}</h1>
+        <p>Welcome, {user.username}</p>
+        <img
+          src={user.photo}
+          alt="Profile"
+          width={100}
+          style={{ borderRadius: "50%" }}
+        />
+        {/* Role-specific dashboard content here */}
       </div>
 
       <UserListRoom />

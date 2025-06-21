@@ -18,7 +18,12 @@ const Navbar = () => {
         const parsed = JSON.parse(stored);
         setUser(parsed);
         setIsLoggedIn(true);
-        fetchProfileImage(parsed._id);
+
+        if (parsed.photo) {
+          setProfileImage(parsed.photo);
+        } else if (parsed._id) {
+          fetchProfileImage(parsed._id);
+        }
       } catch (err) {
         console.error('Error parsing user data:', err);
       }
@@ -62,6 +67,7 @@ const Navbar = () => {
                 <Link href="/Profile">
                   <img
                     src={profileImage || '/default-avatar.png'}
+                    onError={(e) => { e.target.src = '/default-avatar.png'; }}
                     alt="Profile"
                     className="rounded-full h-8 w-8 object-cover border border-gray-300"
                   />
@@ -98,6 +104,7 @@ const Navbar = () => {
           <Link href="/Profile">
             <img
               src={profileImage || '/default-avatar.png'}
+              onError={(e) => { e.target.src = '/default-avatar.png'; }}
               alt="Profile"
               className="h-10 w-10 rounded-full border-2 border-white shadow-md object-cover bg-gray-100"
             />

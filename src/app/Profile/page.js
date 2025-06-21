@@ -1,50 +1,65 @@
-"use client";
+'use client';
 
-import React, { useEffect, useState } from "react";
-import axios from "@/utils/axios";
-import { toast } from "react-hot-toast";
-import { motion } from "framer-motion";
+import React, { useEffect, useState } from 'react';
+import axios from '@/utils/axios';
+import { toast } from 'react-hot-toast';
+import { motion } from 'framer-motion';
 
 const Profile = () => {
   const [profile, setProfile] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
-
+  const [profileImage, setProfileImage] = useState(null);
   const [tempProfile, setTempProfile] = useState({
-    _id: "",
-    profileImage: "",
-    name: "",
-    username: "",
-    email: "",
-    role: "",
+    _id: '',
+    profileImage: '',
+    name: '',
+    username: '',
+    email: '',
+    role: '',
   });
-
   const [previewImage, setPreviewImage] = useState(null);
   const [fileUpload, setFileUpload] = useState(null);
 
   useEffect(() => {
-    const stored = localStorage.getItem("user");
-    if (stored) {
+    const stored = localStorage.getItem('user');
+    if (!stored) return;
+
+    try {
       const parsed = JSON.parse(stored);
       setProfile(parsed);
-      setTempProfile(parsed);
-      fetchProfileImage(parsed._id);
+      setTempProfile((prev) => ({
+        ...prev,
+        ...parsed,
+      }));
+
+      // ✅ Prefer Google photo if available
+      if (parsed.photo) {
+        setProfileImage(parsed.photo);
+        setTempProfile((prev) => ({ ...prev, profileImage: parsed.photo }));
+      }
+
+      // ✅ If internal user with _id, fetch image from server
+      else if (parsed._id) {
+        fetchProfileImage(parsed._id);
+      }
+    } catch (err) {
+      console.error('Error loading profile:', err);
     }
   }, []);
 
   const fetchProfileImage = async (userId) => {
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem('token');
       const response = await axios.get(`/api/profile/image/${userId}`, {
-        responseType: "blob",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        responseType: 'blob',
+        headers: { Authorization: `Bearer ${token}` },
       });
       const blobURL = URL.createObjectURL(response.data);
+      setProfileImage(blobURL);
       setTempProfile((prev) => ({ ...prev, profileImage: blobURL }));
     } catch (err) {
-      console.warn("Profile image not found.");
+      console.warn('Profile image not found.');
     }
   };
 
@@ -65,50 +80,49 @@ const Profile = () => {
   const updateProfile = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem('token');
 
-      // Upload new profile image (if any)
+      // ⬆ Upload profile image (if updated)
       if (fileUpload) {
         const formData = new FormData();
-        formData.append("profileImage", fileUpload);
-
-        await axios.post("/api/profile/upload-image", formData, {
+        formData.append('profileImage', fileUpload);
+        await axios.post('/api/profile/upload-image', formData, {
           headers: {
-            "Content-Type": "multipart/form-data",
+            'Content-Type': 'multipart/form-data',
             Authorization: `Bearer ${token}`,
           },
         });
       }
 
-      // Update profile data via the correct route
-      const response = await axios.put(
+      // ✏ Update profile details
+      const res = await axios.put(
         `/api/profile/users/${tempProfile._id}`,
         tempProfile,
         {
           headers: {
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
           },
         }
       );
 
-      if (response.status === 200) {
-        localStorage.setItem("user", JSON.stringify(response.data.user));
-        setProfile(response.data.user);
-        setTempProfile(response.data.user);
+      if (res.status === 200) {
+        localStorage.setItem('user', JSON.stringify(res.data.user));
+        setProfile(res.data.user);
+        setTempProfile(res.data.user);
         setPreviewImage(null);
         setIsEditing(false);
-        toast.success("✅ Profile updated successfully.");
+        toast.success('✅ Profile updated successfully.');
       }
     } catch (err) {
       if (
         err.response?.status === 400 &&
-        err.response.data?.field === "username"
+        err.response.data?.field === 'username'
       ) {
-        toast.error("❌ Username already taken. Try another one.");
+        toast.error('❌ Username already taken. Try another one.');
       } else {
         toast.error(
-          `❌ ${err.response?.data?.message || "Something went wrong."}`
+          `❌ ${err.response?.data?.message || 'Something went wrong.'}`
         );
       }
     } finally {
@@ -116,8 +130,8 @@ const Profile = () => {
     }
   };
 
-
-  if (!profile) return <div className="p-6 text-red-500">No profile loaded</div>;
+  if (!profile)
+    return <div className="p-6 text-red-500">No profile loaded</div>;
 
   return (
     <motion.div
@@ -126,14 +140,12 @@ const Profile = () => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <h2 className="text-3xl font-bold mb-6 text-center text-blue-600">Your Profile</h2>
+      <h2 className="text-3xl font-bold mb-6 text-center text-blue-600">
+        Your Profile
+      </h2>
 
       {isEditing ? (
-        <motion.div
-          className="space-y-5"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-        >
+        <motion.div className="space-y-5" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
           <div>
             <label className="block text-sm font-medium">Profile Image</label>
             <input
@@ -151,7 +163,7 @@ const Profile = () => {
             )}
           </div>
 
-          {["name", "username"].map((field) => (
+          {['name', 'username'].map((field) => (
             <div key={field}>
               <label className="block text-sm font-medium capitalize">
                 {field}
@@ -172,7 +184,7 @@ const Profile = () => {
               className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded transition"
               disabled={loading}
             >
-              {loading ? "Saving..." : "Save"}
+              {loading ? 'Saving...' : 'Save'}
             </button>
             <button
               onClick={() => setIsEditing(false)}
@@ -190,9 +202,9 @@ const Profile = () => {
           animate={{ opacity: 1 }}
         >
           <img
-            src={tempProfile.profileImage || "/default-avatar.png"}
+            src={tempProfile.profileImage || '/default-avatar.png'}
             alt="Profile"
-            onError={(e) => (e.target.src = "/default-avatar.png")}
+            onError={(e) => (e.target.src = '/default-avatar.png')}
             className="w-32 h-32 rounded-full mx-auto object-cover border border-blue-400"
           />
           <div className="text-md space-y-1">
