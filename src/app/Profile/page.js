@@ -151,7 +151,7 @@ const Profile = () => {
             )}
           </div>
 
-          {["name", "username", "email", "role"].map((field) => (
+          {["name", "username"].map((field) => (
             <div key={field}>
               <label className="block text-sm font-medium capitalize">
                 {field}
